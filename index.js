@@ -2,45 +2,74 @@ const https = require('https');
 const pdf = require('pdf-parse');
 
 function indexToGermanWeekday(weekdayIndex) {
-  switch (weekdayIndex) {
-    case 0:
-      return 'Montag';
-    case 1:
-      return 'Dienstag';
-    case 2:
-      return 'Mittwoch';
-    case 3:
-      return 'Donnerstag';
-    case 4:
-      return 'Freitag';
-    case 5:
-      return 'Samstag';
-    case 6:
-      return 'Sonntag';
-    default:
-      return undefined;
-      //throw new Error('Invalid German weekday');
-  }
+    switch (weekdayIndex) {
+        case 0:
+            return 'Montag';
+        case 1:
+            return 'Dienstag';
+        case 2:
+            return 'Mittwoch';
+        case 3:
+            return 'Donnerstag';
+        case 4:
+            return 'Freitag';
+        case 5:
+            return 'Samstag';
+        case 6:
+            return 'Sonntag';
+        default:
+            return undefined;
+        //throw new Error('Invalid German weekday');
+    }
 }
 
 function extractMenu(text, weekdayIndex, menuCategories) {
     const weekdayName = indexToGermanWeekday(+weekdayIndex);
     const dayRegex = /(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)\s*\d{1,2}\.\s*[A-Za-z]+\s*([\s\S]*?)(?=(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag|$))/g;
+    const priceRegex = /Intern\s*(\d+\.\d+)\s*\/\s*Extern\s*(\d+\.\d+)/g;
+    // const meatFishRegex = /Fleisch:.*|Fisch:.*|Meeresfrüchte:.*$/g;
+    const originRegex = /(Fleisch|Fisch|Meeresfrüchte):\s*([^,\n]+)(?:,\s*([^,\n]+))?(?:\n(Fleisch|Fisch|Meeresfrüchte):\s*([^,\n]+)(?:,\s*([^,\n]+))?)?/;
     let match;
     let menus = [];
 
     while ((match = dayRegex.exec(text)) !== null) {
         const dayMenu = match[2];
-        const items = splitByPrice(dayMenu);
+        let splitItems = dayMenu.split(priceRegex);
+        let items = [];
+        let prices = [];
 
-        // Check for special case like 'Buffet' being a single word
-        if (menuCategories.includes('Buffet') && items[2] && items[2].split(' ').length === 1) {
-            items.splice(2, 0, null); // Insert null for Buffet
+        // Process each item and separate prices and menu items
+        for (let i = 0; i < splitItems.length; i++) {
+            if (i % 3 === 0) { // Menu item
+                items.push(splitItems[i]);
+            } else { // Price
+                prices.push(splitItems[i]);
+            }
         }
 
-        let menu = { day: match[1] };
+        let menu = {day: match[1]};
         menuCategories.forEach((category, index) => {
-            menu[category] = cleanMenu(items[index]);
+            let item = items[index] ? items[index].trim() : '';
+            let origin = undefined;
+
+            // Check if the next item is the origin
+            if (index < items.length - 1 && originRegex.test(items[index + 1])) {
+                const match = originRegex.exec(items[index + 1]);
+                console.log(items[index + 1].substring(0, 20))
+                console.log(match ?? undefined)
+                origin = match ? match[0].trim() : undefined;
+                items[index + 1] = items[index + 1].replace(originRegex, '').trim();
+            }
+
+            const cleanItem = cleanMenu(item);
+
+            if (cleanItem) {
+                menu[category] = {
+                    ...cleanItem,
+                    price: prices[index] ? {intern: prices[index * 2], extern: prices[index * 2 + 1]} : undefined,
+                    origin: origin
+                };
+            }
         });
 
         menus.push(menu);
@@ -61,22 +90,30 @@ const htpMenuCategories = ['Local', 'Vegi', 'Globetrotter', 'Buffet'];
 const ht201MenuCategories = ['Local', 'Global', 'Vegi', 'Pizza & Pasta'];
 // Use like this: extractMenu(pdfText, weekdayIndex, ht201MenuCategories)
 
-function splitByPrice(menu) {
-  const priceRegex = /Intern\s*\d+\.\d+\s*\/\s*Extern\s*\d+\.\d+/g;
-  const meatFishRegex = /Fleisch.*|Fisch.*|Meeresfrüchte.*|\s*$/g;
-  const items = menu.split(priceRegex).map(item => item.trim()).filter(item => item);
-  return items.map(item => item.replace(meatFishRegex, '').trim());
-}
+// function cleanMenu(menu) {
+//   if (!menu || menu === 'Geschlossen' || menu.includes('Für Fragen zu den einzelnen Gerichten')) {
+//       return undefined;
+//   }
+//   menu = menu.replace(/(\r\n|\n|\r)/gm, ', ').replace(/ ,/g, ',').replace(/&,/g, '&');
+//   return menu.replace(/\s+/g, ' ');
+// }
 
 function cleanMenu(menu) {
-  if (!menu || menu === 'Geschlossen' || menu.includes('Für Fragen zu den einzelnen Gerichten')) {
-      return undefined;
-  }
-  return menu.replace(/\s+/g, ' ');
+    if (!menu || menu === 'Geschlossen' || menu.includes('Für Fragen zu den einzelnen Gerichten')) {
+        return undefined;
+    }
+
+    let splitMenu = menu.split('\n'); // Split the menu into two parts at the first newline
+    const title = splitMenu[0].replace(/\s+/g, ' ').trim(); // Clean and trim the title
+    splitMenu = splitMenu.splice(1)
+    let description = splitMenu.length > 0 ? splitMenu.join('\n').replace(/(\r\n|\n|\r)/gm, ', ').replace(/ ,/g, ',').replace(/&,/g, '&').replace(/\s+/g, ' ').trim() : '';
+
+    return {title, description};
 }
 
+
 const express = require('express');
-const { log } = require('console');
+const {log} = require('console');
 const app = express()
 const port = process.env.port || 3000;
 
@@ -100,7 +137,7 @@ function extractMenus(restaurant, text, weekdayIndex) {
 
 // Update route handlers to use the new function
 app.get('/:restaurant/:weekdayIndex', (req, res) => {
-    const { restaurant, weekdayIndex } = req.params;
+    const {restaurant, weekdayIndex} = req.params;
     console.log("Restaurant:", restaurant, "Weekday:", weekdayIndex);
 
     // Determine the URL based on the restaurant
@@ -108,21 +145,22 @@ app.get('/:restaurant/:weekdayIndex', (req, res) => {
         ? "https://www.betriebsrestaurants-migros.ch/media/k5dnh0sd/landingpage_menueplan_htp.pdf"
         : "https://www.betriebsrestaurants-migros.ch/media/x4vjg4pd/menueplan_six-ht201.pdf";
 
-    https.get(pdfUrl, function(pdfRes) {
+    https.get(pdfUrl, function (pdfRes) {
         const data = [];
 
-        pdfRes.on('data', function(chunk) {
+        pdfRes.on('data', function (chunk) {
             data.push(chunk);
-        }).on('end', function() {
+        }).on('end', function () {
             const buffer = Buffer.concat(data);
-            pdf(buffer).then(function(data) {
+            pdf(buffer).then(function (data) {
                 res.send(extractMenus(restaurant, data.text, weekdayIndex));
             });
         });
     });
 });
 
-/*httpsServer*/app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+/*httpsServer*/
+app.listen(port, () => {
+    console.log(`Example app listening on port ${port}`)
 })
 
