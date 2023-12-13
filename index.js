@@ -1,6 +1,11 @@
 const https = require('https');
 const pdf = require('pdf-parse');
 
+const DAY_REGEX = /(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)\s*\d{1,2}\.\s*[A-Za-z]+\s*([\s\S]*?)(?=(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag|$))/g;
+const PRICE_REGEX = /Intern\s*(\d+\.\d+)\s*\/\s*Extern\s*(\d+\.\d+)/g;
+// const meatFishRegex = /Fleisch:.*|Fisch:.*|Meeresfrüchte:.*$/g;
+const ORIGIN_REGEX = /(Fleisch|Fisch|Meeresfrüchte):\s*([^,\n]+)(?:,\s*([^,\n]+))?(\n(Fleisch|Fisch|Meeresfrüchte):\s*([^,\n]+)(?:,\s*([^,\n]+))?)*\s*/;
+
 function indexToGermanWeekday(weekdayIndex) {
     switch (weekdayIndex) {
         case 0:
@@ -25,16 +30,12 @@ function indexToGermanWeekday(weekdayIndex) {
 
 function extractMenu(text, weekdayIndex, menuCategories) {
     const weekdayName = indexToGermanWeekday(+weekdayIndex);
-    const dayRegex = /(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)\s*\d{1,2}\.\s*[A-Za-z]+\s*([\s\S]*?)(?=(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag|$))/g;
-    const priceRegex = /Intern\s*(\d+\.\d+)\s*\/\s*Extern\s*(\d+\.\d+)/g;
-    // const meatFishRegex = /Fleisch:.*|Fisch:.*|Meeresfrüchte:.*$/g;
-    const originRegex = /(Fleisch|Fisch|Meeresfrüchte):\s*([^,\n]+)(?:,\s*([^,\n]+))?(\n(Fleisch|Fisch|Meeresfrüchte):\s*([^,\n]+)(?:,\s*([^,\n]+))?)*\s*/;
     let match;
     let menus = [];
 
-    while ((match = dayRegex.exec(text)) !== null) {
+    while ((match = DAY_REGEX.exec(text)) !== null) {
         const dayMenu = match[2];
-        let splitItems = dayMenu.split(priceRegex);
+        let splitItems = dayMenu.split(PRICE_REGEX);
         let items = [];
         let prices = [];
 
@@ -48,15 +49,35 @@ function extractMenu(text, weekdayIndex, menuCategories) {
         }
 
         let menu = {day: match[1]};
+
+        let itemIndex = 0;
         menuCategories.forEach((category, index) => {
-            let item = items[index] ? items[index].trim() : '';
+            // if (match[1] === 'Montag') {
+            //     console.log(category)
+            //     console.log(index)
+            //     console.log(items.length)
+            //     console.log("---------")
+            //     console.log(index === menuCategories.length - 2)
+            //     console.log(!items[index + 1])
+            //     console.log(items.length < 4)
+            // }
+
+            if (index === menuCategories.length - 2 && !items[index + 1] && items.length < 4) {
+                return;
+            }
+
+            // if (index === menuCategories.length - 2 && items.length < 4) {
+            //     return;
+            // }
+
+            let item = items[itemIndex] ? items[itemIndex].trim() : '';
             let origin = undefined;
 
             // Check if the next item is the origin
-            if (index < items.length - 1 && originRegex.test(items[index + 1])) {
-                const match = originRegex.exec(items[index + 1]);
+            if (itemIndex < items.length - 1 && ORIGIN_REGEX.test(items[itemIndex + 1])) {
+                const match = ORIGIN_REGEX.exec(items[itemIndex + 1]);
                 origin = match ? match[0].trim() : undefined;
-                items[index + 1] = items[index + 1].replace(originRegex, '').trim();
+                items[itemIndex + 1] = items[itemIndex + 1].replace(ORIGIN_REGEX, '').trim();
             }
 
             const cleanItem = cleanMenu(item);
@@ -64,10 +85,12 @@ function extractMenu(text, weekdayIndex, menuCategories) {
             if (cleanItem) {
                 menu[category] = {
                     ...cleanItem,
-                    price: prices[index] ? {intern: prices[index * 2], extern: prices[index * 2 + 1]} : undefined,
+                    price: prices[itemIndex] ? {intern: prices[itemIndex * 2], extern: prices[itemIndex * 2 + 1]} : undefined,
                     origin: origin
                 };
             }
+
+            itemIndex++;
         });
 
         menus.push(menu);
