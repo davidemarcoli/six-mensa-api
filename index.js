@@ -108,7 +108,7 @@ const htpMenuCategories = ['Local', 'Vegi', 'Globetrotter', 'Buffet'];
 // Use like this: extractMenu(pdfText, weekdayIndex, htpMenuCategories)
 
 // Example usage for HT201 menu
-const ht201MenuCategories = ['Local', 'Global', 'Vegi', 'Pizza & Pasta'];
+const ht201MenuCategories = ['Local', 'Vegi', 'Global', 'Pizza & Pasta'];
 // Use like this: extractMenu(pdfText, weekdayIndex, ht201MenuCategories)
 
 // function cleanMenu(menu) {
@@ -174,7 +174,11 @@ app.get('/:restaurant/:weekdayIndex', (req, res) => {
         }).on('end', function () {
             const buffer = Buffer.concat(data);
             pdf(buffer).then(function (data) {
-                res.send(extractMenus(restaurant, data.text, weekdayIndex));
+                try {
+                    res.send(extractMenus(restaurant, data.text, weekdayIndex));
+                } catch (e) {
+                    res.status(500).send(e);
+                }
             });
         });
     });
