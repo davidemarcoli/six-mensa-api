@@ -120,7 +120,7 @@ const ht201MenuCategories = ['Local', 'Vegi', 'Global', 'Pizza & Pasta'];
 // }
 
 function cleanMenu(menu) {
-    if (!menu || menu === 'Geschlossen' || menu.includes('Für Fragen zu den einzelnen Gerichten')) {
+    if (!menu || menu.startsWith("Geschlossen") || menu.includes('Für Fragen zu den einzelnen Gerichten')) {
         return undefined;
     }
 
