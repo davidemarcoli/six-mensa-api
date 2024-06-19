@@ -43,7 +43,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: leo1305/six-mensa-api:${{ github.event.release.tag_name }}    
+          tags: leo1305/six-mensa-api:${{ github.event.release.tag_name }}
           
       - name: Build and push Docker image for latest tag
         uses: docker/build-push-action@v5
@@ -51,7 +51,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: leo1305/six-mensa-api:${{ github.event.release.tag_name }}    
+          tags: leo1305/six-mensa-api:latest
           
       #- name: Generate artifact attestation
       #  uses: actions/attest-build-provenance@v1
