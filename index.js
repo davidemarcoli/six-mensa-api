@@ -164,7 +164,7 @@ app.get('/:restaurant/:weekdayIndex', (req, res) => {
     // Determine the URL based on the restaurant
     const pdfUrl = restaurant === 'htp'
         ? "https://www.betriebsrestaurants-migros.ch/media/k5dnh0sd/landingpage_menueplan_htp.pdf"
-        : "https://www.betriebsrestaurants-migros.ch/media/x4vjg4pd/menueplan_six-ht201.pdf";
+        : "https://www.betriebsrestaurants-migros.ch/media/c4po1qhz/menueplan_six-ht201.pdf";
 
     https.get(pdfUrl, function (pdfRes) {
         const data = [];
