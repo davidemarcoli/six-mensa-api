@@ -1,5 +1,8 @@
 const https = require('https');
 const pdf = require('pdf-parse');
+const axios = require('axios');
+const express = require('express');
+const { scrapeForPDF } = require('./scrape-links');
 
 const DAY_REGEX = /(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)\s*\d{1,2}\.\s*[A-Za-z]+\s*([\s\S]*?)(?=(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag|$))/g;
 const PRICE_REGEX = /Intern\s*(\d+\.\d+)\s*\/\s*Extern\s*(\d+\.\d+)/g;
@@ -48,7 +51,7 @@ function extractMenu(text, weekdayIndex, menuCategories) {
             }
         }
 
-        let menu = {day: match[1]};
+        let menu = { day: match[1], date: match[0].split("\n")[1].trim() };
 
         let itemIndex = 0;
         menuCategories.forEach((category, index) => {
@@ -85,7 +88,7 @@ function extractMenu(text, weekdayIndex, menuCategories) {
             if (cleanItem) {
                 menu[category] = {
                     ...cleanItem,
-                    price: prices[itemIndex] ? {intern: prices[itemIndex * 2], extern: prices[itemIndex * 2 + 1]} : undefined,
+                    price: prices[itemIndex] ? { intern: prices[itemIndex * 2], extern: prices[itemIndex * 2 + 1] } : undefined,
                     origin: origin
                 };
             }
@@ -129,12 +132,10 @@ function cleanMenu(menu) {
     splitMenu = splitMenu.splice(1)
     let description = splitMenu.length > 0 ? splitMenu.join('\n').replace(/(\r\n|\n|\r)/gm, ', ').replace(/ ,/g, ',').replace(/&,/g, '&').replace(/,,/g, ',').replace(/\s+/g, ' ').trim() : '';
 
-    return {title, description};
+    return { title, description };
 }
 
 
-const express = require('express');
-const {log} = require('console');
 const app = express()
 const port = process.env.port || 3000;
 
@@ -156,36 +157,92 @@ function extractMenus(restaurant, text, weekdayIndex) {
     }
 }
 
-// Update route handlers to use the new function
+let parsedMenus = {
+    htp: {},
+    ht201: {}
+};
+
+let scrapedPdfLinks = {}
+
+const REFRESH_INTERVAL = 60 * 60 * 1000; // 1 hour in milliseconds
+const SIX_MENSA_BASE_URL = "https://www.betriebsrestaurants-migros.ch"
+
+async function fetchAndParsePDF(url) {
+    try {
+        const response = await axios.get(url, { responseType: 'arraybuffer' });
+        const buffer = Buffer.from(response.data);
+        const data = await pdf(buffer);
+        return data.text;
+    } catch (error) {
+        console.error(`Error fetching or parsing PDF from ${url}:`, error);
+        return null;
+    }
+}
+
+async function updateMenus() {
+    console.log('Updating menus...');
+    const pdfLinks = await scrapeForPDF("https://www.betriebsrestaurants-migros.ch/landingpages/six/info-menuplan", [
+        { name: "HTP", pattern: "/media/[a-zA-Z0-9]+/.*menueplan.+htp.+pdf$" },
+        { name: "HT201", pattern: "/media/[a-zA-Z0-9]+/.*menueplan.+ht201.+pdf$" }
+    ]);
+
+    // Add base URL to each PDF link
+    for (const key in pdfLinks) {
+        if (pdfLinks[key]) {
+            pdfLinks[key] = `${SIX_MENSA_BASE_URL}${pdfLinks[key]}`;
+        }
+    }
+
+    scrapedPdfLinks = pdfLinks
+
+    if (pdfLinks.HTP) {
+        const htpText = await fetchAndParsePDF(pdfLinks.HTP);
+        if (htpText) {
+            parsedMenus.htp = extractMenu(htpText, -1, htpMenuCategories)
+        }
+    }
+
+    if (pdfLinks.HT201) {
+        const ht201Text = await fetchAndParsePDF(pdfLinks.HT201);
+        if (ht201Text) {
+            parsedMenus.ht201 = extractMenu(ht201Text, -1, ht201MenuCategories);
+        }
+    }
+
+    console.log('Menus updated successfully');
+}
+
+// Initialize menus on startup
+updateMenus();
+
+// Set up periodic updates
+setInterval(updateMenus, REFRESH_INTERVAL);
+
 app.get('/:restaurant/:weekdayIndex', (req, res) => {
-    const {restaurant, weekdayIndex} = req.params;
-    console.log("Restaurant:", restaurant, "Weekday:", weekdayIndex);
+    const { restaurant, weekdayIndex } = req.params;
 
-    // Determine the URL based on the restaurant
-    const pdfUrl = restaurant === 'htp'
-        ? "https://www.betriebsrestaurants-migros.ch/media/ptvpzskx/landingpage_menueplan_htp.pdf"
-        : "https://www.betriebsrestaurants-migros.ch/media/z3sbigk4/menueplan_six-ht201.pdf";
+    if (restaurant !== 'htp' && restaurant !== 'ht201') {
+        return res.status(400).send('Invalid restaurant');
+    }
 
-    https.get(pdfUrl, function (pdfRes) {
-        const data = [];
-
-        pdfRes.on('data', function (chunk) {
-            data.push(chunk);
-        }).on('end', function () {
-            const buffer = Buffer.concat(data);
-            pdf(buffer).then(function (data) {
-                try {
-                    res.send(extractMenus(restaurant, data.text, weekdayIndex));
-                } catch (e) {
-                    res.status(500).send(e);
-                }
-            });
-        });
-    });
+    const menu = weekdayIndex == -1 ? parsedMenus[restaurant] : parsedMenus[restaurant][weekdayIndex];
+    if (menu) {
+        res.json(menu);
+    } else {
+        res.status(404).send('Menu not found');
+    }
 });
+
+app.get("/pdf-links", (req, res) => {
+    if (Object.keys(scrapedPdfLinks).length === 0) {
+        res.status(404).send('No pdf links found')
+    }
+
+    res.json(scrapedPdfLinks)
+})
 
 /*httpsServer*/
 app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`)
+    console.log(`SIX Mensa API listening on port ${port}`)
 })
 
