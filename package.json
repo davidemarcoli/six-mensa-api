@@ -10,6 +10,8 @@
   "author": "Davide Marcoli",
   "license": "Apache License",
   "dependencies": {
+    "axios": "^1.7.7",
+    "cheerio": "^1.0.0",
     "express": "^4.18.2",
     "pdf-parse": "^1.1.1"
   }
