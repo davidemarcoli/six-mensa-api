@@ -1,7 +1,7 @@
 const axios = require('axios');
 const cheerio = require('cheerio')
 
-export async function scrapeForPDF(url, elementsToSearch) {
+async function scrapeForPDF(url, elementsToSearch) {
 
     const result = {}
     const patterns = {}
@@ -29,6 +29,8 @@ export async function scrapeForPDF(url, elementsToSearch) {
         console.error("Error occured while scraping: ", error)
     }
 }
+
+exports.scrapeForPDF = scrapeForPDF
 
 // const baseUrl = "https://www.betriebsrestaurants-migros.ch"
 // const sixMensaBaseUrl = baseUrl + "/landingpages/six/info-menuplan"
