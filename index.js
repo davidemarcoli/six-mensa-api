@@ -5,7 +5,7 @@ const express = require('express');
 const { scrapeForPDF } = require('./scrape-links');
 
 const DAY_REGEX = /(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)\s*\d{1,2}\.\s*[A-Za-z]+\s*([\s\S]*?)(?=(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag|$))/g;
-const PRICE_REGEX = /Intern\s*(\d+\.\d+)\s*\/\s*Extern\s*(\d+\.\d+)/g;
+const PRICE_REGEX = /(?:\d+\.\d+\s*Intern|Intern\s*(\d+\.\d+))\s*\/\s*(?:\d+\.\d+\s*Extern|Extern\s*(\d+\.\d+))/g;
 // const meatFishRegex = /Fleisch:.*|Fisch:.*|Meeresfrüchte:.*$/g;
 const ORIGIN_REGEX = /(Fleisch|Fisch|Meeresfrüchte|Geflügel):?\s*([^,\n]+)(?:,\s*([^,\n]+))?(\n(Fleisch|Fisch|Meeresfrüchte):?\s*([^,\n]+)(?:,\s*([^,\n]+))?)*\s*/;
 
