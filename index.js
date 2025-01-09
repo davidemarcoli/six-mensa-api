@@ -7,7 +7,8 @@ const { scrapeForPDF } = require('./scrape-links');
 const DAY_REGEX = /(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)\s*\d{1,2}\.\s*[A-Za-z]+\s*([\s\S]*?)(?=(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag|$))/g;
 const PRICE_REGEX = /(?:\d+\.\d+\s*Intern|Intern\s*(\d+\.\d+))\s*\/\s*(?:\d+\.\d+\s*Extern|Extern\s*(\d+\.\d+))/g;
 // const meatFishRegex = /Fleisch:.*|Fisch:.*|Meeresfrüchte:.*$/g;
-const ORIGIN_REGEX = /(Fleisch|Fisch|Meeresfrüchte|Geflügel):?\s*([^,\n]+)(?:,\s*([^,\n]+))?(\n(Fleisch|Fisch|Meeresfrüchte):?\s*([^,\n]+)(?:,\s*([^,\n]+))?)*\s*/;
+// const ORIGIN_REGEX = /((F:)|(Fleisch|Fisch|Meeresfrüchte|Geflügel):?)\s*([^,\n]+)(?:,\s*([^,\n]+))?(\n((F:)|(Fleisch|Fisch|Meeresfrüchte|Geflügel):?)\s*([^,\n]+)(?:,\s*([^,\n]+))?)*\s*/;
+const ORIGIN_REGEX = /((F:)|(?:Fleisch|Fisch|Meeresfrüchte|Geflügel)(?:\b|(?!\w)):?)\s*([^,\n]+)(?:,\s*([^,\n]+))?(\n((F:)|(?:Fleisch|Fisch|Meeresfrüchte|Geflügel)(?:\b|(?!\w)):?)\s*([^,\n]+)(?:,\s*([^,\n]+))?)*\s*/;
 
 function indexToGermanWeekday(weekdayIndex) {
     switch (weekdayIndex) {
@@ -80,7 +81,19 @@ function extractMenu(text, weekdayIndex, menuCategories) {
             if (itemIndex < items.length - 1 && ORIGIN_REGEX.test(items[itemIndex + 1])) {
                 const match = ORIGIN_REGEX.exec(items[itemIndex + 1]);
                 origin = match ? match[0].trim() : undefined;
-                items[itemIndex + 1] = items[itemIndex + 1].replace(ORIGIN_REGEX, '').trim();
+                if (origin.startsWith('Für Fragen zu den einzelnen Gerichten')) {
+                    origin = undefined;
+                } else {
+                    // if there is a comma separated list of numbers at the end of the origin, remove it
+                    origin = origin.replace(/(\d+,?\s?)+$/, '').trim();
+                    items[itemIndex + 1] = items[itemIndex + 1].replace(ORIGIN_REGEX, '').trim();
+                }
+            }
+
+            // Check if next item is comma separated list of numbers (alergies)
+            if (itemIndex < items.length - 1 && items[itemIndex + 1].match(/(\d+,?)+/)) {
+                // Skip the alergies
+                items[itemIndex + 1] = items[itemIndex + 1].replace(/(\d+,?\s?)+/, '').trim();
             }
 
             const cleanItem = cleanMenu(item);
@@ -127,10 +140,15 @@ function cleanMenu(menu) {
         return undefined;
     }
 
+    // if there is a comma separated list of numbers at the start of the menu, remove it
+    menu = menu.replace(/^(\d*,?\s?)+/, '').trim();
     let splitMenu = menu.split('\n'); // Split the menu into two parts at the first newline
     const title = splitMenu[0].replace(/\s+/g, ' ').trim(); // Clean and trim the title
-    splitMenu = splitMenu.splice(1)
-    let description = splitMenu.length > 0 ? splitMenu.join('\n').replace(/(\r\n|\n|\r)/gm, ', ').replace(/ ,/g, ',').replace(/&,/g, '&').replace(/,,/g, ',').replace(/\s+/g, ' ').trim() : '';
+    if (!title) {
+        return undefined;
+    }
+    splitMenu = splitMenu.splice(1).map(item => item.trim()); // Remove the title from the menu and clean the rest
+    let description = splitMenu.length > 0 ? splitMenu.join('\n').replace(/(\r\n|\n|\r)/gm, ', ').replace(/ ,/g, ',').replace(/&,/g, '&').replace(/,\s?,/g, ',').replace(/\s+/g, ' ').trim() : '';
 
     return { title, description };
 }
