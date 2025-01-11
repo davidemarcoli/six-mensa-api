@@ -86,6 +86,8 @@ function extractMenu(text, weekdayIndex, menuCategories) {
                 } else {
                     // if there is a comma separated list of numbers at the end of the origin, remove it
                     origin = origin.replace(/(\d+,?\s?)+$/, '').trim();
+                    // if there is a / at the end of the origin, remove it
+                    origin = origin.replace(/(\/\s?)+$/, '').trim();
                     items[itemIndex + 1] = items[itemIndex + 1].replace(ORIGIN_REGEX, '').trim();
                 }
             }
