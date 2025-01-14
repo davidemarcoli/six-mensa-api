@@ -85,17 +85,17 @@ function extractMenu(text, weekdayIndex, menuCategories) {
                     origin = undefined;
                 } else {
                     // if there is a comma separated list of numbers at the end of the origin, remove it
-                    origin = origin.replace(/(\d+,?\s?)+$/, '').trim();
-                    // if there is a / at the end of the origin, remove it
-                    origin = origin.replace(/(\/\s?)+$/, '').trim();
+                    origin = origin.replace(/(\d+[,;]?\s?)+$/, '').trim();
+                    // if there is a /, comma or ; at the end of the origin, remove it
+                    origin = origin.replace(/([\/,;]\s?)+$/, '').trim();
                     items[itemIndex + 1] = items[itemIndex + 1].replace(ORIGIN_REGEX, '').trim();
                 }
             }
 
             // Check if next item is comma separated list of numbers (alergies)
-            if (itemIndex < items.length - 1 && items[itemIndex + 1].match(/(\d+,?)+/)) {
+            if (itemIndex < items.length - 1 && items[itemIndex + 1].match(/(\d+[,;]?)+/)) {
                 // Skip the alergies
-                items[itemIndex + 1] = items[itemIndex + 1].replace(/(\d+,?\s?)+/, '').trim();
+                items[itemIndex + 1] = items[itemIndex + 1].replace(/(\d+[,;]?\s?)+/, '').trim();
             }
 
             const cleanItem = cleanMenu(item);
@@ -143,7 +143,8 @@ function cleanMenu(menu) {
     }
 
     // if there is a comma separated list of numbers at the start of the menu, remove it
-    menu = menu.replace(/^(\d*,?\s?)+/, '').trim();
+    console.log(menu)
+    menu = menu.replace(/^(\d*[,;]?\s?)+/, '').trim();
     let splitMenu = menu.split('\n'); // Split the menu into two parts at the first newline
     const title = splitMenu[0].replace(/\s+/g, ' ').trim(); // Clean and trim the title
     if (!title) {
@@ -205,6 +206,11 @@ async function updateMenus() {
         { name: "HTP", pattern: "/media/[a-zA-Z0-9]+/.*menueplan.+htp.+pdf$" },
         { name: "HT201", pattern: "/media/[a-zA-Z0-9]+/.*menueplan.+ht201.+pdf$" }
     ]);
+
+    if (!pdfLinks) {
+        console.warn("Failed to fetch pdf links")
+        return
+    }
 
     // Add base URL to each PDF link
     for (const key in pdfLinks) {
