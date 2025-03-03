@@ -3,8 +3,8 @@ const pdf = require('pdf-parse');
 const axios = require('axios');
 const express = require('express');
 const { scrapeForPDF } = require('./scrape-links');
-
-const DAY_REGEX = /(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)\s*\d{1,2}\.\s*[A-Za-z]+\s*([\s\S]*?)(?=(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag|$))/g;
+                                                                                                      // ä
+const DAY_REGEX = /(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)\s*\d{1,2}\.\s*[A-Za-z\u00e4]+\s*([\s\S]*?)(?=(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag|$))/g;
 const PRICE_REGEX = /(?:\d+\.\d+\s*Intern|Intern\s*(\d+\.\d+))\s*\/\s*(?:\d+\.\d+\s*Extern|Extern\s*(\d+\.\d+))/g;
 // const meatFishRegex = /Fleisch:.*|Fisch:.*|Meeresfrüchte:.*$/g;
 // const ORIGIN_REGEX = /((F:)|(Fleisch|Fisch|Meeresfrüchte|Geflügel):?)\s*([^,\n]+)(?:,\s*([^,\n]+))?(\n((F:)|(Fleisch|Fisch|Meeresfrüchte|Geflügel):?)\s*([^,\n]+)(?:,\s*([^,\n]+))?)*\s*/;
@@ -143,7 +143,6 @@ function cleanMenu(menu) {
     }
 
     // if there is a comma separated list of numbers at the start of the menu, remove it
-    console.log(menu)
     menu = menu.replace(/^(\d*[,;]?\s?)+/, '').trim();
     let splitMenu = menu.split('\n'); // Split the menu into two parts at the first newline
     const title = splitMenu[0].replace(/\s+/g, ' ').trim(); // Clean and trim the title
