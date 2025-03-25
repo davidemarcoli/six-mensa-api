@@ -8,7 +8,7 @@ const DAY_REGEX = /(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)
 const PRICE_REGEX = /(?:\d+\.\d+\s*Intern|Intern\s*(\d+\.\d+))\s*\/\s*(?:\d+\.\d+\s*Extern|Extern\s*(\d+\.\d+))/g;
 // const meatFishRegex = /Fleisch:.*|Fisch:.*|Meeresfrüchte:.*$/g;
 // const ORIGIN_REGEX = /((F:)|(Fleisch|Fisch|Meeresfrüchte|Geflügel):?)\s*([^,\n]+)(?:,\s*([^,\n]+))?(\n((F:)|(Fleisch|Fisch|Meeresfrüchte|Geflügel):?)\s*([^,\n]+)(?:,\s*([^,\n]+))?)*\s*/;
-const ORIGIN_REGEX = /((F:)|(?:Fleisch|Fisch|Meeresfrüchte|Geflügel)(?:\b|(?!\w)):?)\s*([^,\n]+)(?:,\s*([^,\n]+))?(\n((F:)|(?:Fleisch|Fisch|Meeresfrüchte|Geflügel)(?:\b|(?!\w)):?)\s*([^,\n]+)(?:,\s*([^,\n]+))?)*\s*/;
+const ORIGIN_REGEX = /(((F|C):)|(?:Fleisch|Fisch|Meeresfrüchte|Geflügel)(?:\b|(?!\w)):?)\s*([^,\n]+)(?:,\s*([^,\n]+))?(\n(((F|C):)|(?:Fleisch|Fisch|Meeresfrüchte|Geflügel)(?:\b|(?!\w)):?)\s*([^,\n]+)(?:,\s*([^,\n]+))?)*\s*/;
 
 function indexToGermanWeekday(weekdayIndex) {
     switch (weekdayIndex) {
