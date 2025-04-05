@@ -85,17 +85,17 @@ function extractMenu(text, weekdayIndex, menuCategories) {
                     origin = undefined;
                 } else {
                     // if there is a comma separated list of numbers at the end of the origin, remove it
-                    origin = origin.replace(/(\d+[,;]?\s?)+$/, '').trim();
+                    origin = origin.replace(/(\d+[.,;]?\s?)+$/, '').trim();
                     // if there is a /, comma or ; at the end of the origin, remove it
-                    origin = origin.replace(/([\/,;]\s?)+$/, '').trim();
+                    origin = origin.replace(/([\/.,;]\s?)+$/, '').trim();
                     items[itemIndex + 1] = items[itemIndex + 1].replace(ORIGIN_REGEX, '').trim();
                 }
             }
 
             // Check if next item is comma separated list of numbers (alergies)
-            if (itemIndex < items.length - 1 && items[itemIndex + 1].match(/(\d+[,;]?)+/)) {
+            if (itemIndex < items.length - 1 && items[itemIndex + 1].match(/(\d+[.,;]?)+/)) {
                 // Skip the alergies
-                items[itemIndex + 1] = items[itemIndex + 1].replace(/(\d+[,;]?\s?)+/, '').trim();
+                items[itemIndex + 1] = items[itemIndex + 1].replace(/(\d+[.,;]?\s?)+/, '').trim();
             }
 
             const cleanItem = cleanMenu(item);
@@ -138,12 +138,14 @@ const ht201MenuCategories = ['Local', 'Vegi', 'Global', 'Pizza & Pasta'];
 // }
 
 function cleanMenu(menu) {
+
+    // if there is a comma separated list of numbers at the start of the menu, remove it
+    menu = menu.replace(/^(\d*[.,;]?\s?)+/, '').trim();
+
     if (!menu || menu.startsWith("Geschlossen") || menu.startsWith('Öffnungszeiten') || menu.includes('Für Fragen zu den einzelnen Gerichten')) {
         return undefined;
     }
 
-    // if there is a comma separated list of numbers at the start of the menu, remove it
-    menu = menu.replace(/^(\d*[,;]?\s?)+/, '').trim();
     let splitMenu = menu.split('\n'); // Split the menu into two parts at the first newline
     const title = splitMenu[0].replace(/\s+/g, ' ').trim(); // Clean and trim the title
     if (!title) {
