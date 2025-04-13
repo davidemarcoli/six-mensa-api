@@ -111,6 +111,11 @@ function extractMenu(text, weekdayIndex, menuCategories) {
             itemIndex++;
         });
 
+        if (Object.keys(menu).filter(key => menuCategories.includes(key)).length === 0) {
+            // If no valid menu items were found, skip this menu
+            continue;
+        }
+
         menus.push(menu);
     }
 
