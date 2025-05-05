@@ -196,7 +196,14 @@ const SIX_MENSA_BASE_URL = "https://www.betriebsrestaurants-migros.ch"
 
 async function fetchAndParsePDF(url) {
     try {
-        const response = await axios.get(url, { responseType: 'arraybuffer' });
+        const response = await axios.get(url, { 
+            responseType: 'arraybuffer', 
+            headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            } 
+        });
         const buffer = Buffer.from(response.data);
         const data = await pdf(buffer);
         return data.text;
@@ -228,6 +235,7 @@ async function updateMenus() {
     scrapedPdfLinks = pdfLinks
 
     if (pdfLinks.HTP) {
+        console.log('HTP PDF link:', pdfLinks.HTP);
         const htpText = await fetchAndParsePDF(pdfLinks.HTP);
         if (htpText) {
             parsedMenus.htp = extractMenu(htpText, -1, htpMenuCategories)
@@ -235,6 +243,7 @@ async function updateMenus() {
     }
 
     if (pdfLinks.HT201) {
+        console.log('HT201 PDF link:', pdfLinks.HT201);
         const ht201Text = await fetchAndParsePDF(pdfLinks.HT201);
         if (ht201Text) {
             parsedMenus.ht201 = extractMenu(ht201Text, -1, ht201MenuCategories);
