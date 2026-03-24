@@ -1,9 +1,10 @@
-import { 
-    getUpdatedPdfContent, 
-    fetchPdfLinks, 
-    doesProcessedAndTranslatedExist 
+import {
+    getUpdatedPdfContent,
+    fetchPdfLinks,
+    doesProcessedAndTranslatedExist
 } from './pdfService';
-import { extractMenusFromPdf, translateToEnglish } from './aiService';
+import { translateToEnglish } from './aiService';
+import { processMenu } from './processorService';
 import { saveProcessedMenu, loadProcessedMenu } from './fileService';
 import { generateAllMenuImages } from './imageService';
 import { DailyMenu, RestaurantData, PdfLinks } from '../types';
@@ -37,7 +38,7 @@ export async function updateMenus(): Promise<void> {
     if (pdfLinks.HTP) {
         const optionalContent = await getUpdatedPdfContent(pdfLinks.HTP, 'htp');
         if (optionalContent) {
-            processedMenu.htp = await extractMenusFromPdf(optionalContent) || [];
+            processedMenu.htp = await processMenu(optionalContent, 'htp') || [];
             saveProcessedMenu('htp', processedMenu.htp);
             translatedMenus.htp = await translateToEnglish(processedMenu.htp) || [];
             saveProcessedMenu('htp', translatedMenus.htp, true);
@@ -57,7 +58,7 @@ export async function updateMenus(): Promise<void> {
     if (pdfLinks.HT201) {
         const optionalContent = await getUpdatedPdfContent(pdfLinks.HT201, 'ht201');
         if (optionalContent) {
-            processedMenu.ht201 = await extractMenusFromPdf(optionalContent) || [];
+            processedMenu.ht201 = await processMenu(optionalContent, 'ht201') || [];
             saveProcessedMenu('ht201', processedMenu.ht201);
             translatedMenus.ht201 = await translateToEnglish(processedMenu.ht201) || [];
             saveProcessedMenu('ht201', translatedMenus.ht201, true);

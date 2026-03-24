@@ -8,16 +8,25 @@ RUN bun install
 
 FROM node:22-alpine AS builder
 
-RUN mkdir -p /home/node/app/node_modules
+WORKDIR /home/node/app
 
 COPY --from=installer /home/bun/app/node_modules ./node_modules
+COPY package*.json ./
+COPY tsconfig.json ./
+COPY src ./src
+
+RUN npx tsc
+
+FROM node:22-alpine
 
 WORKDIR /home/node/app
 
+COPY --from=installer /home/bun/app/node_modules ./node_modules
+COPY --from=builder /home/node/app/dist ./dist
 COPY package*.json ./
 
-COPY dist/* .
+RUN mkdir -p pdfs processed images
 
 EXPOSE 3000
 
-CMD [ "node", "app.js" ]
+CMD [ "node", "dist/app.js" ]

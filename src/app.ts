@@ -41,12 +41,12 @@ async function initialize() {
 // Middleware
 app.use(express.json());
 
-// Routes
-app.use('/', menuRoutes);
+// Routes — data/pdf/image/status routes BEFORE menu routes (menu uses /:restaurant/:weekday wildcard)
+app.use('/', dataRoutes);
 app.use('/', pdfRoutes);
 app.use('/', imageRoutes);
-app.use('/', dataRoutes);
 app.use('/', statusRoutes);
+app.use('/', menuRoutes);
 
 // Start server
 app.listen(config.PORT, () => {
@@ -58,6 +58,7 @@ app.listen(config.PORT, () => {
     console.log(`- Menu Translation: ${config.ENABLE_MENU_TRANSLATION ? 'Enabled' : 'Disabled'}`);
     console.log(`- Auto Update: ${config.ENABLE_AUTO_UPDATE ? 'Enabled' : 'Disabled'}`);
     console.log(`- PDF Scraping: ${config.ENABLE_PDF_SCRAPING ? 'Enabled' : 'Disabled'}`);
+    console.log(`- Menu Processor: ${config.MENU_PROCESSOR}`);
 });
 
 // Initialize the application

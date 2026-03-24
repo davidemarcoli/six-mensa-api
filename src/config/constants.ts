@@ -24,4 +24,5 @@ export const config = {
     ENABLE_AUTO_UPDATE: parseBoolEnv(process.env.ENABLE_AUTO_UPDATE, true),
     AUTO_UPDATE_INTERVAL_MINUTES: parseIntEnv(process.env.AUTO_UPDATE_INTERVAL_MINUTES, 60),
     ENABLE_PDF_SCRAPING: parseBoolEnv(process.env.ENABLE_PDF_SCRAPING, true),
+    MENU_PROCESSOR: (process.env.MENU_PROCESSOR || 'ai') as 'ai' | 'regex' | 'ai-with-fallback',
 };
