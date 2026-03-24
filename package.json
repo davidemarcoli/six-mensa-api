@@ -1,6 +1,6 @@
 {
   "name": "six-menu",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "get the menu of the six mensa",
   "main": "dist/app.js",
   "scripts": {
