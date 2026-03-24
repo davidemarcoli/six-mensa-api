@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/davidemarcoli/six-mensa-api/compare/v1.1.11...v2.0.0) (2026-03-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* parse menu with ai, history endpoint, and Dockerfile build step ([#5](https://github.com/davidemarcoli/six-mensa-api/issues/5))
+
+### Features
+
+* parse menu with ai, history endpoint, and Dockerfile build step ([#5](https://github.com/davidemarcoli/six-mensa-api/issues/5)) ([3a99079](https://github.com/davidemarcoli/six-mensa-api/commit/3a99079d41ab05ea876c73a92df8d7b8036f0207))
+
 ## [1.1.11](https://github.com/davidemarcoli/six-mensa-api/compare/v1.1.10...v1.1.11) (2025-05-05)
 
 
