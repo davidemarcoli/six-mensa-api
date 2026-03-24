@@ -40,8 +40,10 @@ export async function updateMenus(): Promise<void> {
         if (optionalContent) {
             processedMenu.htp = await processMenu(optionalContent, 'htp') || [];
             saveProcessedMenu('htp', processedMenu.htp);
-            translatedMenus.htp = await translateToEnglish(processedMenu.htp) || [];
-            saveProcessedMenu('htp', translatedMenus.htp, true);
+            if (config.ENABLE_MENU_TRANSLATION) {
+                translatedMenus.htp = await translateToEnglish(processedMenu.htp) || [];
+                saveProcessedMenu('htp', translatedMenus.htp, true);
+            }
         } else {
             console.debug("No changes detected in the PDF content for HTP");
             const loadedHtpMenu = loadProcessedMenu('htp');
@@ -60,8 +62,10 @@ export async function updateMenus(): Promise<void> {
         if (optionalContent) {
             processedMenu.ht201 = await processMenu(optionalContent, 'ht201') || [];
             saveProcessedMenu('ht201', processedMenu.ht201);
-            translatedMenus.ht201 = await translateToEnglish(processedMenu.ht201) || [];
-            saveProcessedMenu('ht201', translatedMenus.ht201, true);
+            if (config.ENABLE_MENU_TRANSLATION) {
+                translatedMenus.ht201 = await translateToEnglish(processedMenu.ht201) || [];
+                saveProcessedMenu('ht201', translatedMenus.ht201, true);
+            }
         } else {
             console.debug("No changes detected in the PDF content for HT201");
             const loadedHt201Menu = loadProcessedMenu('ht201');
