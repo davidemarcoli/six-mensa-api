@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/davidemarcoli/six-mensa-api/compare/v2.0.0...v2.0.1) (2026-03-24)
+
+
+### Bug Fixes
+
+* conditionally translate and save menus based on configuration ([f0cf1fb](https://github.com/davidemarcoli/six-mensa-api/commit/f0cf1fbbe0bb63f9977c8649a04ef4fe9dab621e))
+
 ## [2.0.0](https://github.com/davidemarcoli/six-mensa-api/compare/v1.1.11...v2.0.0) (2026-03-24)
 
 
