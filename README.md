@@ -1,96 +1,296 @@
-# SIX Mensa API Documentation
+# SIX Mensa API
 
-## Overview
+A modern TypeScript API for accessing, translating, and visualizing SIX restaurant menus.
 
-The SIX Mensa API is designed to extract weekly menus from provided PDF links for two different restaurants: HTP and HT201. It parses the PDF documents to retrieve menu information and then serves this data over a simple HTTP API. This API is built using Node.js and Express and can be deployed to a server with HTTPS enabled.
+## 🚀 Overview
 
-## Features
+SIX Mensa API extracts menu data from PDFs of two SIX restaurants (HTP and HT201), processes the data using AI, and provides a REST API for accessing the information. It supports menu translation from German to English and can even generate AI-powered food images.
 
-- Parses PDF menus from two specified URLs.
-- Filters menus based on the weekday.
-- Cleans and formats the menu data for easy consumption.
-- Supports querying for specific weekdays.
+## ✨ Features
 
-## Prerequisites
+- **PDF Menu Extraction** - Automatically scrapes and parses menu PDFs
+- **AI-Powered Menu Processing** - Uses Google's Gemini API to extract structured data
+- **Menu Translation** - Translates menus from German to English
+- **Food Image Generation** - Creates realistic food images based on menu descriptions
+- **Caching System** - Stores processed data to minimize API usage
+- **Customizable Schedule** - Configurable auto-update intervals
+- **Feature Flags** - Toggle features on/off via environment variables
+- **REST API** - Simple endpoints for accessing menu data
+- **TypeScript** - Fully typed codebase for better development experience
 
-Before you can run the API server, you need to have Node.js and npm (Node Package Manager) installed on your machine. Additionally, you need to install the necessary npm packages:
+## 🏗️ Architecture
 
-- `express` for creating the server
-- `https` for making HTTPS requests
-- `pdf-parse` for parsing PDF files
-
-To install the dependencies, run the following command in the root directory of your project:
-
-```sh
-npm install
+```
+├── config/             # Application configuration
+├── schemas/            # AI model schemas  
+├── services/           # Core business logic
+│   ├── aiService.ts    # AI processing functions
+│   ├── fileService.ts  # File system operations
+│   ├── imageService.ts # Image generation
+│   ├── menuService.ts  # Menu data management
+│   └── pdfService.ts   # PDF handling
+├── routes/             # API endpoints
+├── types/              # TypeScript type definitions
+├── utils/              # Helper functions
+└── app.ts              # Main application entry point
 ```
 
-## Usage
+## 🛠️ Setup
 
-1. Start the server by running the JavaScript file. For example, if your file is named `server.js`:
+### Prerequisites
 
-   ```sh
-   node server.js
+- Node.js 16+ and npm/yarn
+- Google Gemini API key (for menu parsing and image generation)
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/davidemarcoli/six-mensa-api.git
+   cd six-mensa-api
    ```
 
-2. The server listens on port 3000 by default but can be configured to listen on any port by setting the `process.env.port` variable.
-
-3. To retrieve the menu for a specific day from the HTP restaurant, make a GET request to:
-
-   ```
-   http://<your-server-address>:3000/htp/:weekdayIndex
+2. Install dependencies:
+   ```bash
+   npm install
    ```
 
-   Replace `:weekdayIndex` with a number where 0 corresponds to Monday, 1 to Tuesday, and so on until 6 for Sunday.
-
-4. Similarly, to retrieve the menu for a specific day from the HT201 restaurant, make a GET request to:
-
+3. Create a `.env` file with your configuration (see `.env.example` for options):
    ```
-   http://<your-server-address>:3000/ht201/:weekdayIndex
+   PORT=3000
+   GEMINI_API_KEY=your_api_key_here
+   ENABLE_IMAGE_GENERATION=false
    ```
 
-## API Endpoints
+4. Build the TypeScript code:
+   ```bash
+   npm run build
+   ```
 
-- `GET /htp/:weekdayIndex`: Fetches the menu for a given weekday from the HTP restaurant.
-- `GET /ht201/:weekdayIndex`: Fetches the menu for a given weekday from the HT201 restaurant.
+5. Start the server:
+   ```bash
+   npm start
+   ```
 
-## Response Format
+## ⚙️ Configuration
 
-The response will be in JSON format, containing the menu for the requested day. For example:
+The application is highly configurable using environment variables:
 
+### Core Configuration
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PORT` | Server port | `3000` |
+| `GEMINI_API_KEY` | Google Gemini API key | *Required* |
+
+### Feature Flags
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `ENABLE_IMAGE_GENERATION` | Enable AI image generation | `false` |
+| `ENABLE_MENU_TRANSLATION` | Enable menu translation | `true` |
+| `ENABLE_AUTO_UPDATE` | Enable scheduled updates | `true` |
+| `ENABLE_PDF_SCRAPING` | Enable PDF scraping | `true` |
+| `AUTO_UPDATE_INTERVAL_MINUTES` | Update interval in minutes | `60` |
+
+### Advanced Configuration
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `REFRESH_INTERVAL` | Refresh interval in ms | `3600000` |
+| `IMAGE_GENERATION_DELAY` | Delay between image requests | `20000` |
+| `SIX_MENSA_BASE_URL` | Base URL for SIX website | *configured* |
+| `AI_MODEL` | Gemini model for text | `gemini-2.0-flash` |
+| `IMAGE_AI_MODEL` | Gemini model for images | `gemini-2.0-flash-preview-image-generation` |
+
+## 🌐 API Endpoints
+
+### Menu Endpoints
+
+#### Get menu for a specific restaurant and day
+```
+GET /:restaurant/:weekdayIndex
+```
+
+Parameters:
+- `restaurant`: Either `htp` or `ht201`
+- `weekdayIndex`: Day index (0 for Monday, 1 for Tuesday, etc., or -1 for all days)
+
+Query Parameters:
+- `language`: Use `en` for English translation (default is German)
+
+Example:
+```
+GET /htp/0?language=en
+```
+
+Response:
 ```json
 {
-  "day": "Montag",
-  "Local": "Menu description",
-  "Vegi": "Menu description",
-  "Globetrotter": "Menu description",
-  "Buffet": "Menu description"
+  "day": "Monday",
+  "date": "15. May",
+  "menues": [
+    {
+      "title": "Chicken Curry",
+      "description": "With jasmine rice and vegetables",
+      "type": "Local",
+      "dietaryType": "meat",
+      "price": {
+        "intern": 7.40,
+        "extern": 12.40
+      },
+      "origin": "Meat: Switzerland",
+      "allergens": ["Gluten", "Milk"],
+      "imagePath": "image/a1b2c3d4"
+    },
+    // More menu items...
+  ]
 }
 ```
 
-## Known Limitations
+### PDF Endpoints
 
-- The API currently only parses menus that follow a specific format in the PDF. Changes in the PDF format may require changes to the parsing logic.
-- The API assumes that the provided PDF URLs are accessible and that the PDF documents conform to a structure that can be parsed by the `pdf-parse` library.
+#### Get PDF for a specific restaurant
+```
+GET /pdf/:restaurant
+```
 
-## Development and Testing
+#### List all available PDFs
+```
+GET /pdfs
+```
 
-- Ensure that you have sample PDFs that match the expected format for local testing.
-- You can use Postman or any other API testing tool to test the API endpoints.
+#### Get scraped PDF links
+```
+GET /pdf-links
+```
 
-## Deployment
+### Image Endpoints
 
-- For production use, it is recommended to configure HTTPS with SSL certificates to ensure secure data transmission. Uncomment the relevant lines and provide the correct paths to your SSL certificate and private key.
+#### Get image for a menu item
+```
+GET /image/:imageId
+```
 
-## Contributing
+#### Generate a new image
+```
+POST /generate-image
+```
 
-If you would like to contribute to the development of this API, please follow the standard GitHub pull request process:
+Request body:
+```json
+{
+  "day": "Monday",
+  "menu": {
+    "title": "Chicken Curry",
+    "description": "With jasmine rice",
+    "type": "Local",
+    "dietaryType": "meat",
+    "price": {
+      "intern": 7.40,
+      "extern": 12.40
+    },
+    "origin": "Meat: Switzerland",
+    "allergens": ["Gluten"]
+  }
+}
+```
 
-- Fork the repository.
-- Create a new branch for your feature or fix.
-- Commit your changes with descriptive messages.
-- Push your branch and create a pull request against the main branch of the original repository.
+### Other Endpoints
 
-## Support
+#### List processed data files
+```
+GET /processed
+```
 
-For support, please open an issue in the GitHub repository or contact the repository owner.
+#### Get server status
+```
+GET /status
+```
+
+Response:
+```json
+{
+  "version": "1.0.0",
+  "features": {
+    "imageGeneration": false,
+    "menuTranslation": true,
+    "autoUpdate": true,
+    "pdfScraping": true,
+    "updateInterval": "60 minutes"
+  },
+  "restaurants": ["htp", "ht201"]
+}
+```
+
+## 📂 Data Storage
+
+The application stores data in the following directories:
+
+- `/pdfs` - Downloaded PDF files
+- `/processed` - Processed and translated menu data
+- `/images` - Generated food images
+
+## 🔄 Development Workflow
+
+1. Run in development mode with hot reloading:
+   ```bash
+   npm run dev
+   ```
+
+2. Lint your code:
+   ```bash
+   npm run lint
+   ```
+
+3. Run tests:
+   ```bash
+   npm test
+   ```
+
+4. Build for production:
+   ```bash
+   npm run build
+   ```
+
+## 🚢 Deployment
+
+### Docker
+
+The application includes a Dockerfile for easy containerization:
+
+```bash
+# Build the Docker image
+docker build -t six-mensa-api .
+
+# Run the container
+docker run -p 3000:3000 --env-file .env six-mensa-api
+```
+
+### Environment Considerations
+
+- For production environments, ensure you have adequate disk space for cached PDFs and images
+- Consider setting `ENABLE_IMAGE_GENERATION=false` to reduce API costs
+- Adjust `AUTO_UPDATE_INTERVAL_MINUTES` based on your needs
+
+## 📚 Technical Details
+
+### AI Processing
+
+The API uses Google's Gemini models for:
+1. Extracting structured data from PDF menus
+2. Translating menu text from German to English
+3. Generating realistic food images
+
+### Performance Optimization
+
+- PDFs are only re-processed if they've changed
+- Generated images are cached to disk
+- Processed menu data is stored as JSON files
+
+## 📄 License
+
+[MIT License](LICENSE)
+
+## 🙏 Acknowledgements
+
+- [Google Gemini API](https://ai.google.dev/) for AI functionality
+- [Express](https://expressjs.com/) for the web server framework
+- [TypeScript](https://www.typescriptlang.org/) for type safety
