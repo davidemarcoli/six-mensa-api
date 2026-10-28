@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/davidemarcoli/six-mensa-api/compare/v2.0.1...v2.1.0) (2026-10-28)
+
+
+### Features
+
+* add proper retry and change default model to gemini-3.8-flash ([189674a](https://github.com/davidemarcoli/six-mensa-api/commit/189674a777e940547f517a4a6cb2ff5aad8cfa0f))
+
 ## [2.0.1](https://github.com/davidemarcoli/six-mensa-api/compare/v2.0.0...v2.0.1) (2026-03-24)
 
 
