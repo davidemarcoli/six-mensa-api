@@ -97,7 +97,7 @@ The application is highly configurable using environment variables:
 | `REFRESH_INTERVAL` | Refresh interval in ms | `3600000` |
 | `IMAGE_GENERATION_DELAY` | Delay between image requests | `20000` |
 | `SIX_MENSA_BASE_URL` | Base URL for SIX website | *configured* |
-| `AI_MODEL` | Gemini model for text | `gemini-2.0-flash` |
+| `AI_MODEL` | Gemini model for text | `gemini-3.8-flash` |
 | `IMAGE_AI_MODEL` | Gemini model for images | `gemini-2.0-flash-preview-image-generation` |
 
 ## 🌐 API Endpoints

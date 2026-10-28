@@ -3,3 +3,4 @@ dist
 images
 pdfs
 processed
+.env

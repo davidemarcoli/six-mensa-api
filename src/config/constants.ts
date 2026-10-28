@@ -13,7 +13,7 @@ export const config = {
     SIX_MENSA_BASE_URL: process.env.SIX_MENSA_BASE_URL || "https://www.betriebsrestaurants-migros.ch",
     IMAGE_GENERATION_DELAY: parseIntEnv(process.env.IMAGE_GENERATION_DELAY, 20000), // Default: 20 seconds
     GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
-    AI_MODEL: process.env.AI_MODEL || "gemini-2.0-flash",
+    AI_MODEL: process.env.AI_MODEL || "gemini-3.8-flash",
     IMAGE_AI_MODEL: process.env.IMAGE_AI_MODEL || "gemini-2.0-flash-preview-image-generation",
     PORT: parseIntEnv(process.env.PORT, 3000),
     RESTAURANTS: ['htp', 'ht201'] as const,

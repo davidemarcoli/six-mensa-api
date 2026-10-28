@@ -1,10 +1,33 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, GenerateContentParameters, GenerateContentResponse } from "@google/genai";
 import { menuSchema } from '../schemas/menuSchema';
 import { config } from '../config/constants';
 import { addImagePaths } from '../utils/imageUtils';
 import { DailyMenu } from '../types';
 
 const ai = new GoogleGenAI({ apiKey: config.GEMINI_API_KEY });
+
+const RETRYABLE_STATUS_CODES = [429, 500, 503, 504];
+const MAX_RETRIES = 4;
+const INITIAL_RETRY_DELAY_MS = 5000;
+
+async function generateContentWithRetry(params: GenerateContentParameters): Promise<GenerateContentResponse> {
+    for (let attempt = 0; ; attempt++) {
+        try {
+            return await ai.models.generateContent(params);
+        } catch (error) {
+            // The SDK only exposes the HTTP status in the message, e.g. "got status: 503 Service Unavailable. {...}"
+            const message = (error as Error).message ?? '';
+            const status = Number(message.match(/got status: (\d{3})/)?.[1]);
+            const isTimeout = /timed out|TimeoutError/i.test(message);
+            if (attempt >= MAX_RETRIES || !(RETRYABLE_STATUS_CODES.includes(status) || isTimeout)) {
+                throw error;
+            }
+            const delay = INITIAL_RETRY_DELAY_MS * 2 ** attempt;
+            console.warn(`AI request failed (${isTimeout ? 'timeout' : `status ${status}`}), retrying in ${delay / 1000}s (attempt ${attempt + 1}/${MAX_RETRIES})`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+}
 
 export async function extractMenusFromPdf(pdf: ArrayBuffer): Promise<DailyMenu[]> {
     const contents = [
@@ -47,7 +70,7 @@ export async function extractMenusFromPdf(pdf: ArrayBuffer): Promise<DailyMenu[]
         }
     ];
     
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithRetry({
         model: config.AI_MODEL,
         contents: contents,
         config: {
@@ -66,7 +89,7 @@ export async function extractMenusFromPdf(pdf: ArrayBuffer): Promise<DailyMenu[]
 }
 
 export async function translateToEnglish(menu: DailyMenu[]): Promise<DailyMenu[]> {
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithRetry({
         model: config.AI_MODEL,
         contents: [
             {
